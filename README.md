@@ -19,29 +19,29 @@ RSS Jobicy – This interface allows information to be received from the databas
 With this RSS, now you can build job apps with our data feed. Listings of jobs can be derived from the following endpoints:
 
 ## Url parameters:
-> ?feed=job_feed (required)
+` ?feed=job_feed ` * required
 
 Sort by category:
 
-> &job_categories=... (category slug, eg. supporting, dev, marketing..)
+` &job_categories=dev ` (category slug, eg. supporting, dev, marketing..)
 
 Sort by job type:
 
-> &job_types=... (job type slug, eg. full-time, freelance, contract..)
+` &job_types=contract ` (job type slug, eg. full-time, freelance, contract..)
 
 Sort by keywords:
 
-> &search_keywords=... (eg. designer)
+` &search_keywords=designer ` (eg. designer)
 
 Sort by location:
 
-> &search_location=... (eg. usa, europe)
+` &search_location=europe ` (eg. usa, europe)
 
 Example query string:
 
 > https://jobicy.com/?feed=job_feed&job_categories=dev&job_types=full-time
 
-Here we will display full-time developer jobs.
+Here we display the latest 25 full-time developer jobs.
 
 ## What’s next?
 You have now gotten acquainted with the basics of RSS Jobicy. The rest is up to you.
