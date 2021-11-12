@@ -23,11 +23,11 @@ With this RSS, now you can build job apps with our data feed. Listings of jobs c
 
 Sort by category:
 
-` &job_categories=dev ` (category slug, eg. supporting, dev, marketing..)
+` &job_categories=dev ` (category slug, eg. supporting, dev, marketing, business, design-multimedia, admin, engineering, accounting-finance, hr, management, copywriting)
 
 Sort by job type:
 
-` &job_types=contract ` (job type slug, eg. full-time, freelance, contract..)
+` &job_types=contract ` (job type slug, eg. full-time, freelance, contract, part-time)
 
 Sort by keywords:
 
@@ -35,7 +35,7 @@ Sort by keywords:
 
 Sort by location:
 
-` &search_location=europe ` (eg. usa, europe)
+` &search_location=europe ` (eg. apac, usa, canada, europe, emea, uk)
 
 Example query string:
 
