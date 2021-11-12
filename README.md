@@ -6,7 +6,7 @@ No problem! Our public rss feed can help you with that. Anyone can use the feed,
 In this manual, you will find the basic information regarding Jobicy’s RSS working principles and how to use it.
 RSS (Really Simple Syndication) – is a web feed that allows users and applications to access updates to websites in a standardized, computer-readable format
 
-You can find our public RSS feed here for all jobs posted:
+You can find our public RSS/XML feed here for all jobs posted:
 
 > https://jobicy.com/?feed=job_feed
 
