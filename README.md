@@ -4,7 +4,7 @@ Looking to fill a remote job feed and want to use openings listed on Jobicy?
 
 No problem! Our public API/RSS feeds can help you with that. Anyone can use the feed, all we ask is that you attribute the links back to Jobicy.com.
 
-## API feed
+## [Remote Jobs API Feed](https://jobicy.com/api/v2/remote-jobs)
 
 This API provides access to the latest 50 remote job listings from a diverse range of industries and companies. It’s a valuable resource for developers looking to integrate remote job data into their applications, websites, or research projects. Please read the guidelines and instructions below to understand how to effectively use the API.
 
@@ -67,7 +67,7 @@ The API response is structured in JSON format with the following main components
   ]
 }</pre>
 
-## RSS feed
+## [Remote Jobs RSS feed](https://jobicy.com/?feed=job_feed)
 
 In this manual, you will find the basic information regarding Jobicy’s RSS working principles and how to use it.  
 [RSS (Really Simple Syndication)](https://en.wikipedia.org/wiki/RSS) – is a web feed that allows users and applications to access updates to websites in a standardized, computer-readable format
@@ -95,9 +95,9 @@ Example query string:
 
 Response: Full-time Customer Service jobs in the U.S. region.
 
-## [XML](https://jobicy.com/feed/newjobs) feed
+## [Remote Jobs XML feed](https://jobicy.com/feed/newjobs)
 
-Returns the 150 most recently published remote jobs:
+Returns the 500 most recently published remote jobs:
 
 `https://jobicy.com/feed/newjobs`
 
@@ -107,7 +107,7 @@ You have now gotten acquainted with the basics of RSS Jobicy. The rest is up to 
 
 Of course, in real life, no one works with RSS in adjacent browser tabs. For this, different programming languages, SDK and code generators are used. The RSS working mechanism is very simple. The means of sending http-requests and handling responses from the server are practically provided in any environment. This means freedom of choice is constantly existent.
 
-<div id="message" class="notification error mt0">We’re grateful you’re incorporating the Jobicy Feeds in your work! It’s important to mention that we provide RSS/XML access primarily for the purpose of enabling the wider distribution of our job listings. We kindly request that you refrain from distributing Jobicy’s job listings to any external job platforms, such as Jooble, Google Jobs, and LinkedIn, among others. Our job postings are intentionally published with a 12-hour delay to ensure that Jobicy is recognized as the original source on various channels. Additionally, there’s no necessity to frequently poll for job data. Accessing the Feed to retrieve Jobicy job information just a few times daily should suffice since our data doesn’t change more rapidly than this. Please be aware that we may restrict access in response to excessive querying.</div>
+<div id="message" class="notification error mt0">We’re grateful you’re incorporating the Jobicy Feeds in your work! It’s important to mention that we provide API/RSS/XML access primarily for the purpose of enabling the wider distribution of our job listings. We kindly request that you refrain from distributing Jobicy’s job listings to any external job platforms, such as Jooble, Google Jobs, and LinkedIn, among others. Our job postings are intentionally published with a 12-hour delay to ensure that Jobicy is recognized as the original source on various channels. Additionally, there’s no necessity to frequently poll for job data. Accessing the Feed to retrieve Jobicy job information just a few times daily should suffice since our data doesn’t change more rapidly than this. Please be aware that we may restrict access in response to excessive querying.</div>
 
 ## Fair Use
 
