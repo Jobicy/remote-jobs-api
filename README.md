@@ -1,4 +1,4 @@
-# remote-jobs-xml-feeds
+# remote-jobs-api
 
 Looking to fill a remote job feed and want to use openings listed on Jobicy?
 
