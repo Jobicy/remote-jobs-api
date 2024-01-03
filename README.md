@@ -14,10 +14,13 @@ To retrieve the latest 50 remote job listings, use the following API call:
 
 <pre>Query Parameters (optional):
   count - Number of listings to return (default: 50, range: 1-50)  
-  jobGeo - Filter by job region (default: all regions)  
+  jobGeo - Filter by job region (default: all regions) 
+  jobCategory - Filter by job category (default: all categories)
   keyWord - Search by job title and description (default: all jobs)
   
-Eg: https://jobicy.com/api/v2/remote-jobs?count=5&jobGeo=usa&keyWord=seo</pre>
+Eg: https://jobicy.com/api/v2/remote-jobs?count=5&jobGeo=usa&jobCategory=marketing&keyWord=seo</pre>
+
+Predefined query parameters: [jobGeo](https://jobicy.com/api/v2/remote-jobs?get=locations) | [jobCategory](https://jobicy.com/api/v2/remote-jobs?get=categories)
 
 The API response is structured in JSON format with the following main components:
 
