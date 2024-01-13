@@ -15,12 +15,12 @@ To retrieve the latest 50 remote job listings, use the following API call:
 <pre>Query Parameters (optional):
   count - Number of listings to return (default: 50, range: 1-50)  
   geo - Filter by job region (default: all regions) 
-  sector - Filter by job category (default: all categories)
+  industry - Filter by job category (default: all categories)
   tag - Search by job title and description (default: all jobs)
   
-Eg: https://jobicy.com/api/v2/remote-jobs?count=20&amp;geo=usa&amp;sector=marketing&amp;tag=seo</pre>
+Eg: https://jobicy.com/api/v2/remote-jobs?count=20&amp;geo=usa&amp;industry=marketing&amp;tag=seo</pre>
 
-Predefined query parameters: [geo](https://jobicy.com/api/v2/remote-jobs?get=locations) | [sectors](https://jobicy.com/api/v2/remote-jobs?get=sectors)
+Predefined query parameters: [geo](https://jobicy.com/api/v2/remote-jobs?get=locations) | [industries](https://jobicy.com/api/v2/remote-jobs?get=industries)
 
 The API response is structured in JSON format with the following main components:
 
@@ -30,7 +30,7 @@ The API response is structured in JSON format with the following main components
  "jobTitle": Job title,
  "companyName": Company name,
  "companyLogo": Company logo link,
- "jobSector": Job function (sector),
+ "jobIndustry": Job function (sector),
  "jobType": Job type (full-time, contract, part-time or internship)
  "jobGeo": Geographic restriction for employment (or Anywhere if not applicable), 
  "jobLevel": Seniority level (or Any if not applicable), 
@@ -48,9 +48,9 @@ Get the 20 latest remote jobs with the keyword "Python" from any region:
 Get the 15 latest remote jobs from Canada:
 <pre>https://jobicy.com/api/v2/remote-jobs?count=15&amp;geo=canada</pre>
 Get the 30 latest remote jobs in the Copywriting category from USA:
-<pre>https://jobicy.com/api/v2/remote-jobs?count=30&amp;geo=usa&amp;sector=copywriting</pre>
+<pre>https://jobicy.com/api/v2/remote-jobs?count=30&amp;geo=usa&amp;industry=copywriting</pre>
 Get the 10 latest remote jobs in the Customer Support category from any region:
-<pre>https://jobicy.com/api/v2/remote-jobs?count=10&amp;sector=supporting</pre>
+<pre>https://jobicy.com/api/v2/remote-jobs?count=10&amp;industry=supporting</pre>
 
 ## [Remote Jobs RSS feed](https://jobicy.com/?feed=job_feed)
 
