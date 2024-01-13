@@ -14,61 +14,43 @@ To retrieve the latest 50 remote job listings, use the following API call:
 
 <pre>Query Parameters (optional):
   count - Number of listings to return (default: 50, range: 1-50)  
-  jobGeo - Filter by job region (default: all regions) 
-  jobCategory - Filter by job category (default: all categories)
-  keyWord - Search by job title and description (default: all jobs)
+  geo - Filter by job region (default: all regions) 
+  sector - Filter by job category (default: all categories)
+  tag - Search by job title and description (default: all jobs)
   
-Eg: https://jobicy.com/api/v2/remote-jobs?count=5&jobGeo=usa&jobCategory=marketing&keyWord=seo</pre>
+Eg: https://jobicy.com/api/v2/remote-jobs?count=20&amp;geo=usa&amp;sector=marketing&amp;tag=seo</pre>
 
-Predefined query parameters: [jobGeo](https://jobicy.com/api/v2/remote-jobs?get=locations) | [jobCategory](https://jobicy.com/api/v2/remote-jobs?get=categories)
+Predefined query parameters: [geo](https://jobicy.com/api/v2/remote-jobs?get=locations) | [sectors](https://jobicy.com/api/v2/remote-jobs?get=sectors)
 
 The API response is structured in JSON format with the following main components:
 
-<pre>{
-  <span>"friendlyNotice"</span>: <span>"..."</span>,
-  <span>"jobCount"</span>: <span>50</span>,
-  <span>"jobs"</span>:
-  [
-    {
-     <small>// Unique Job ID</small>
-     <span>"id"</span>: <span>12345</span>,
+<pre>
+ "id": Unique Job ID,
+ "url": Job link,
+ "jobTitle": Job title,
+ "companyName": Company name,
+ "companyLogo": Company logo link,
+ "jobSector": Job function (sector),
+ "jobType": Job type (full-time, contract, part-time or internship)
+ "jobGeo": Geographic restriction for employment (or Anywhere if not applicable), 
+ "jobLevel": Seniority level (or Any if not applicable), 
+ "jobExcerpt": Excerpt job description (max 55 characters), 
+ "jobDescription": Full job description (HTML), 
+ "pubDate": Publication date and time (UTC+00:00),
+ "annualSalaryMin": Annual min salary (if applicable),
+ "annualSalaryMax": Annual max salary (if applicable),
+ "salaryCurrency": ISO 4217 salary currency code (if applicable)
+</pre>
 
-     <small>// Job link</small>
-     <span>"url"</span>: <span>"https://jobicy.com/jobs/senior-designer"</span>,
-
-     <small>// Job title</small>
-     <span>"jobTitle"</span>: <span>"Senior Designer"</span>,
-
-     <small>// Company name</small>
-     <span>"companyName"</span>: <span>"ABC"</span>,
-
-     <small>// Company logo link</small>
-     <span>"companyLogo"</span>: <span>"https://jobicy.com/data/img/ABC-logo.jpg"</span>,
-
-     <small>// Job function (category)</small>
-     <span>"jobCategory"</span>: <span>"Design"</span>,
-
-     <small>// Job type (full-time, contract, part-time or internship)</small>
-     <span>"jobType"</span>: <span>"full-time"</span>,
-
-     <small>// Geographic restriction for employment, or Anywhere</small>
-     <span>"jobGeo"</span>: <span>"Anywhere"</span>, 
-
-     <small>// Seniority level, or Any</small>
-     <span>"jobLevel"</span>: <span>"Senior"</span>, 
-
-     <small>// Excerpt job description (max 55 characters)</small>
-     <span>"jobExcerpt"</span>: <span>"We're looking for a designer ..."</span>, 
-
-     <small>// Full job description (HTML)</small>
-     <span>"jobDescription"</span>: <span>"&lt;p&gt;We're looking for a designer ..."</span>, 
-
-     <small>// Publication date and time (UTC+00:00)</small>
-     <span>"pubDate"</span>: <span>"2017-04-13T16:11:04"</span>,
-    },
-    ...
-  ]
-}</pre>
+## API Calls Examples
+Get the 20 latest remote jobs with the keyword "Python" from any region:
+<pre>https://jobicy.com/api/v2/remote-jobs?count=20&amp;tag=python</pre>
+Get the 15 latest remote jobs from Canada:
+<pre>https://jobicy.com/api/v2/remote-jobs?count=15&amp;geo=canada</pre>
+Get the 30 latest remote jobs in the Copywriting category from USA:
+<pre>https://jobicy.com/api/v2/remote-jobs?count=30&amp;geo=usa&amp;sector=copywriting</pre>
+Get the 10 latest remote jobs in the Customer Support category from any region:
+<pre>https://jobicy.com/api/v2/remote-jobs?count=10&amp;sector=supporting</pre>
 
 ## [Remote Jobs RSS feed](https://jobicy.com/?feed=job_feed)
 
@@ -98,27 +80,29 @@ Example query string:
 
 Response: Full-time Customer Service jobs in the U.S. region.
 
-## [Remote Jobs XML feed](https://jobicy.com/feed/newjobs)
-
-Returns the 500 most recently published remote jobs:
-
-`https://jobicy.com/feed/newjobs`
-
 ## What’s next?
 
 You have now gotten acquainted with the basics of RSS Jobicy. The rest is up to you.
 
 Of course, in real life, no one works with RSS in adjacent browser tabs. For this, different programming languages, SDK and code generators are used. The RSS working mechanism is very simple. The means of sending http-requests and handling responses from the server are practically provided in any environment. This means freedom of choice is constantly existent.
 
-<div id="message" class="notification error mt0">We’re grateful you’re incorporating the Jobicy Feeds in your work! It’s important to mention that we provide API/RSS/XML access primarily for the purpose of enabling the wider distribution of our job listings. We kindly request that you refrain from distributing Jobicy’s job listings to any external job platforms, such as Jooble, Google Jobs, and LinkedIn, among others. Our job postings are intentionally published with a 12-hour delay to ensure that Jobicy is recognized as the original source on various channels. Additionally, there’s no necessity to frequently poll for job data. Accessing the Feed to retrieve Jobicy job information just a few times daily should suffice since our data doesn’t change more rapidly than this. Please be aware that we may restrict access in response to excessive querying.</div>
+## Fair Use and Restrictions
 
-## Fair Use
+At Jobicy, we are thankful for your engagement with our Feeds and would like to provide some guidelines to ensure the best use of our resources:
+
+1. Appreciation for Integration: We are grateful for your incorporation of Jobicy Feeds into your projects.
+2. Primary Purpose of API/RSS Access: Our API/RSS access is primarily intended to facilitate the wider distribution of our job listings.
+3. Distribution Limitations: We request that our job listings not be distributed to external job platforms such as Jooble, Google Jobs, LinkedIn, and others.
+4. Publication Timing: To maintain our position as the original source, our job postings are intentionally published with a 6-hour delay.
+5. Access Frequency: Frequent polling for job data is unnecessary. Accessing the Feed a few times a day is sufficient, as our job information does not change more rapidly than this.
+6. Excessive Querying: Please be aware that excessive querying of our Feed may lead to restricted access.
 
 We may implement restrictive measures and notify you and/or your service provider if:
 
-*   you intentionally overload feeds (please limit feed checks to no more than once per hour);
-*   you alter or misrepresent the content of the original response during import;
-*   we determine that your actions are interfering with the functionality of our systems.
+* you intentionally overload feeds (please limit feed checks to no more than once per hour);
+* you alter or misrepresent the content of the original response during import;
+* we determine that your actions are interfering with the functionality of our systems.
+We appreciate your cooperation and adherence to these guidelines to ensure a beneficial partnership.
 
 ## IFTTT Applets
 
