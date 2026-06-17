@@ -1,4 +1,22 @@
+![API](https://img.shields.io/badge/API-v2-blue)
+![MCP](https://img.shields.io/badge/MCP-supported-green)
+![RSS](https://img.shields.io/badge/RSS-available-orange)
+
 # Jobicy API, MCP & RSS Feeds
+
+## Quick Start
+
+Get the latest 10 remote jobs:
+
+```bash
+curl "https://jobicy.com/api/v2/remote-jobs?count=10"
+```
+
+Get Sales jobs from the USA:
+
+```bash
+curl "https://jobicy.com/api/v2/remote-jobs?count=10&geo=usa&industry=seller"
+```
 
 ## Contents
 - [Remote Jobs API](#remote-jobs-api)
@@ -12,8 +30,8 @@
 - [RSS Feed](#rss-feed)
 - [Embeddable Widget](#embeddable-widget)
 - [WordPress Plugin](#wordpress-plugin)
-- [Fair Use and Restrictions](#fair-use-and-restrictions)
 - [IFTTT Applets](#ifttt-applets)
+- [Fair Use and Restrictions](#fair-use-and-restrictions)
 
 Looking to enhance your job board, application, AI agent, or website with high-quality remote job opportunities?
 
@@ -247,6 +265,22 @@ https://wordpress.org/plugins/jobicy/
 
 ---
 
+## IFTTT Applets
+
+Automatically publish new remote jobs to:
+
+* LinkedIn
+* Twitter/X
+* Facebook
+* Telegram
+* Slack
+* Discord
+* WordPress
+
+Browse available applets: [https://ifttt.com/job](https://ifttt.com/job)
+
+---
+
 ## Fair Use and Restrictions
 
 1. API, RSS and MCP access are provided to help distribute Jobicy job listings.
@@ -263,16 +297,12 @@ Access may be restricted if:
 
 ---
 
-## IFTTT Applets
+## Why Jobicy?
 
-Automatically publish new remote jobs to:
+- Curated remote jobs
+- Worldwide coverage
+- REST API
+- MCP support
+- RSS feeds
+- Free public access
 
-* LinkedIn
-* Twitter/X
-* Facebook
-* Telegram
-* Slack
-* Discord
-* WordPress
-
-Browse available applets: [https://ifttt.com/job](https://ifttt.com/job)
