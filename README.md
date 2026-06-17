@@ -135,7 +135,14 @@ The Jobicy MCP server allows AI assistants, IDEs, and autonomous agents to acces
 ### MCP Endpoint
 
 ```text
+MCP Endpoint:
 https://jobicy.com/mcp
+
+Discovery:
+https://jobicy.com/.well-known/mcp.json
+
+Legacy SSE:
+https://jobicy.com/mcp/sse
 ```
 
 ### Available Tools
