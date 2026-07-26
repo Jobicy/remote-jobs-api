@@ -19,6 +19,7 @@ curl "https://jobicy.com/api/v2/remote-jobs?count=10&geo=usa&industry=seller"
 ```
 
 ## Contents
+
 - [Remote Jobs API](#remote-jobs-api)
   - [Query Parameters](#query-parameters)
   - [Taxonomies](#taxonomies)
@@ -38,7 +39,7 @@ Looking to enhance your job board, application, AI agent, or website with high-q
 Jobicy provides remote job data through:
 
 - REST API
-- MCP Server (for AI agents and IDEs)
+- MCP Server for AI agents and IDEs
 - RSS Feed
 - Embeddable Widget
 - WordPress Plugin
@@ -51,16 +52,16 @@ Jobicy provides remote job data through:
 GET https://jobicy.com/api/v2/remote-jobs
 ```
 
-The API provides access to the latest remote job listings from distributed companies across multiple industries and regions.
+The API provides access to the latest remote job listings from distributed companies across multiple job categories and regions.
 
 ### Query Parameters
 
-| Parameter | Description                                               |
-| --------- | --------------------------------------------------------- |
-| count     | Number of listings to return (default: 100, range: 1-100) |
-| [geo](https://jobicy.com/api/v2/remote-jobs?get=locations)       | Filter by job region (default: all regions)                               |
-| [industry](https://jobicy.com/api/v2/remote-jobs?get=industries)  | Filter by job category (default: all categories)                                    |
-| tag       | Search by job title and description (default: all jobs)                 |
+| Parameter | Description |
+| --- | --- |
+| `count` | Number of listings to return. Default: `100`; range: `1–100`. |
+| [`geo`](https://jobicy.com/api/v2/remote-jobs?get=locations) | Filter by geographic region slug. Omit to search all regions. |
+| [`industry`](https://jobicy.com/api/v2/remote-jobs?get=industries) | Filter by job category slug. Omit to search all categories. |
+| `tag` | Search job titles and descriptions. Length: `3–50` characters. |
 
 Example:
 
@@ -70,35 +71,48 @@ https://jobicy.com/api/v2/remote-jobs?count=20&geo=usa&industry=marketing&tag=se
 
 ### Taxonomies
 
-Retrieve available filter values:
+Retrieve the currently available filter values:
 
 ```text
 https://jobicy.com/api/v2/remote-jobs?get=locations
 https://jobicy.com/api/v2/remote-jobs?get=industries
 ```
 
+Clients should use the returned `geoSlug` and `industrySlug` values instead of maintaining hardcoded taxonomy lists.
+
+The following deprecated category slugs remain supported for backward compatibility:
+
+| Deprecated slug | Current slug |
+| --- | --- |
+| `dev` | `engineering` |
+| `e-commerce` | `management` |
+| `video-audio-production` | `design-multimedia` |
+| `translation-localization` | `copywriting` |
+| `smm` | `marketing` |
+
 ### Response Fields
 
-```json
-{
- "id": Unique Job ID,
- "url": Job link,
- "jobTitle": Job title,
- "companyName": Company name,
- "companyLogo": Company logo link,
- "jobIndustry": Job function (industry),
- "jobType": Job type (full-time, contract, part-time or internship)
- "jobGeo": Geographic restriction for employment (or Anywhere if not applicable), 
- "jobLevel": Seniority level (or Any if not applicable), 
- "jobExcerpt": Excerpt job description (max 55 characters), 
- "jobDescription": Full job description (HTML), 
- "pubDate": Publication date and time (UTC+00:00),
- "salaryMin": Min salary (if applicable),
- "salaryMax": Max salary (if applicable),
- "salaryCurrency": ISO 4217 salary currency code (if applicable)
- "salaryPeriod": The period for which the salary is paid (e.g., hourly, daily, ...)
-}
-```
+Each item in the `jobs` array can contain:
+
+| Field | Description |
+| --- | --- |
+| `id` | Unique Jobicy job ID. |
+| `url` | Original Jobicy job URL. |
+| `jobSlug` | Job identifier and URL slug. |
+| `jobTitle` | Job title. |
+| `companyName` | Company name. |
+| `companyLogo` | Company logo URL. |
+| `jobIndustry` | Array of job category names. |
+| `jobType` | Array of employment types, such as Full-Time, Contract, Part-Time, or Internship. |
+| `jobGeo` | Geographic employment restriction, or `Anywhere` when no region is specified. |
+| `jobLevel` | Seniority level, or `Any` when no level is specified. |
+| `jobExcerpt` | Job description excerpt of up to 55 words. |
+| `jobDescription` | Full job description in HTML. |
+| `pubDate` | Publication date and time in ISO 8601 format. |
+| `salaryMin` | Minimum salary, when available. |
+| `salaryMax` | Maximum salary, when available. |
+| `salaryCurrency` | ISO 4217 salary currency code, when available. |
+| `salaryPeriod` | Salary period, such as hourly, monthly, or yearly, when available. |
 
 ### API Examples
 
@@ -114,13 +128,13 @@ Latest 15 jobs from Canada:
 https://jobicy.com/api/v2/remote-jobs?count=15&geo=canada
 ```
 
-Latest 30 Copywriting jobs from the USA:
+Latest 30 Content & Editorial jobs from the USA:
 
 ```text
 https://jobicy.com/api/v2/remote-jobs?count=30&geo=usa&industry=copywriting
 ```
 
-Latest 10 Customer Success jobs:
+Latest 10 Customer Support & Success jobs:
 
 ```text
 https://jobicy.com/api/v2/remote-jobs?count=10&industry=supporting
@@ -137,17 +151,15 @@ The Jobicy MCP server allows AI assistants, IDEs, and autonomous agents to acces
 ```text
 MCP Endpoint:
 https://jobicy.com/mcp
-
 Discovery:
 https://jobicy.com/.well-known/mcp.json
-
 Legacy SSE:
 https://jobicy.com/mcp/sse
 ```
 
 ### Available Tools
 
-#### get_jobs
+#### `get_jobs`
 
 Returns remote job listings.
 
@@ -156,11 +168,11 @@ Parameters:
 ```text
 count (number, optional) - Number of listings to return (range: 1-100, default: 100)
 geo (string, optional) - Filter by geographic region slug (e.g., "europe", "usa", "apac")
-industry (string, optional) - Filter by job category slug (e.g., "dev", "marketing", "seo")
+industry (string, optional) - Filter by job category slug (e.g., "engineering", "marketing", "seo")
 tag (string, optional) - Search keyword for job titles and descriptions
 ```
 
-#### get_taxonomies
+#### `get_taxonomies`
 
 Returns available filtering values.
 
@@ -170,7 +182,7 @@ Parameters:
 type (string, required) - Must be either "locations" or "industries"
 ```
 
-*Note for developers: AI models are instructed to query get_taxonomies first to discover valid geoSlug and industrySlug values before filtering jobs.*
+AI clients should query `get_taxonomies` first to discover valid `geoSlug` and `industrySlug` values before filtering jobs.
 
 ### MCP Configuration Example
 
@@ -190,7 +202,15 @@ type (string, required) - Must be either "locations" or "industries"
 
 Jobicy provides a public RSS feed containing remote job listings.
 
-### Feed URL
+### Feed URLs
+
+Canonical feed:
+
+```text
+https://jobicy.com/jobs/feed
+```
+
+Legacy feed URL:
 
 ```text
 https://jobicy.com/feed/job_feed
@@ -198,29 +218,46 @@ https://jobicy.com/feed/job_feed
 
 ### RSS Parameters
 
-| Parameter       | Description                                |
-| --------------- | ------------------------------------------ |
-| job_categories  | Category slug                              |
-| job_types       | full-time, contract, internship, part-time |
-| search_keywords | Keyword search                             |
-| search_region   | Region slug                                |
+The preferred RSS parameters match the REST API. Legacy parameter names remain supported.
 
-RSS Query Parameters:
+| Preferred parameter | Legacy parameter | Description |
+| --- | --- | --- |
+| `industry` | `job_categories` | Job category slug or comma-separated category slugs. |
+| `type` | `job_types` | Employment type, such as `full-time`, `freelance`, `contract`, or `part-time`. |
+| `tag` | `search_keywords` | Keyword search. |
+| `geo` | `search_region` | Geographic region slug. |
+
+Available canonical category slugs:
 
 ```text
-/feed/job_feed (required)
-&job_categories=... (admin-support, copywriting, translation-localization, supporting, technical-support, cybersecurity, data-science, design-multimedia, video-audio-production, web-app-design, admin, e-commerce, education, accounting-finance, healthcare, hr, legal, marketing, business, seller, seo, smm, management, project-management, engineering, dev, qa-testing)
-&job_types=... (full-time, freelance, contract, part-time)
-&search_keywords=... (eg. designer)
-&search_region=... (apac, emea, latam, argentina, australia, austria, belgium, brazil, bulgaria, canada, china, hong-kong, costa-rica, croatia, cyprus, czechia, denmark, estonia, europe, finland, france, germany, greece, hungary, ireland, israel, italy, japan, latvia, lithuania, mexico, netherlands, new-zealand, norway, philippines, poland, portugal, romania, serbia, singapore, slovakia, slovenia, south-korea, spain, sweden, switzerland, thailand, turkiye, united-arab-emirates, uk, ukraine, usa, vietnam)
+admin-support, copywriting, supporting, technical-support, cybersecurity, data-science, design-multimedia, web-app-design, admin, education, accounting-finance, healthcare, hr, legal, marketing, business, seller, seo, management, project-management, engineering, qa-testing
 ```
 
-Example query string:
+Available employment types:
 
-```http
+```text
+full-time, freelance, contract, part-time
+```
+
+Common region slugs:
+
+```text
+apac, emea, latam, argentina, australia, austria, belgium, brazil, bulgaria, canada, china, hong-kong, costa-rica, croatia, cyprus, czechia, denmark, estonia, europe, finland, france, germany, greece, hungary, ireland, israel, italy, japan, latvia, lithuania, mexico, netherlands, new-zealand, norway, philippines, poland, portugal, romania, serbia, singapore, slovakia, slovenia, south-korea, spain, sweden, switzerland, thailand, turkiye, united-arab-emirates, uk, ukraine, usa, vietnam
+```
+
+Example using the preferred parameters:
+
+```text
+https://jobicy.com/jobs/feed?industry=supporting&type=full-time&geo=usa
+```
+
+Example using the legacy parameters:
+
+```text
 https://jobicy.com/feed/job_feed?job_categories=supporting&job_types=full-time&search_region=usa
 ```
-Response: Full-time Customer Service jobs in the U.S. region.
+
+Both examples return full-time Customer Support & Success jobs available in the USA.
 
 ---
 
@@ -230,7 +267,6 @@ Add a live remote jobs widget to any website.
 
 ```html
 <div id="jobicy-widget"></div>
-
 <script>
 window.jobicyWidgetConfig = {
   query: 'Developer',
@@ -239,18 +275,17 @@ window.jobicyWidgetConfig = {
   limit: 10
 };
 </script>
-
 <script src="https://jobicy.com/api/prod/wg.js"></script>
 ```
 
 ### Widget Options
 
-| Option     | Description                       |
-| ---------- | --------------------------------- |
-| query      | Default search term               |
-| theme      | light or dark                     |
-| autoSearch | Automatically search on load      |
-| limit      | Number of jobs to display (1-100) |
+| Option | Description |
+| --- | --- |
+| `query` | Default search term. |
+| `theme` | Widget color theme: `light` or `dark`. |
+| `autoSearch` | Whether to search automatically on load. |
+| `limit` | Number of jobs to display (`1–100`). |
 
 ---
 
@@ -276,13 +311,13 @@ https://wordpress.org/plugins/jobicy/
 
 Automatically publish new remote jobs to:
 
-* LinkedIn
-* Twitter/X
-* Facebook
-* Telegram
-* Slack
-* Discord
-* WordPress
+- LinkedIn
+- Twitter/X
+- Facebook
+- Telegram
+- Slack
+- Discord
+- WordPress
 
 Browse available applets: [https://ifttt.com/job](https://ifttt.com/job)
 
@@ -290,17 +325,17 @@ Browse available applets: [https://ifttt.com/job](https://ifttt.com/job)
 
 ## Fair Use and Restrictions
 
-1. API, RSS and MCP access are provided to help distribute Jobicy job listings.
+1. API, RSS, and MCP access are provided to help distribute Jobicy job listings.
 2. Do not redistribute listings to competing job aggregation platforms such as Google Jobs, LinkedIn, Jooble, and similar services.
-3. Job listings are intentionally published with a 6-hour delay.
+3. Job listings are intentionally published with a 3-hour delay.
 4. Polling feeds more than once per hour is discouraged.
 5. Excessive requests may result in restricted access.
 
 Access may be restricted if:
 
-* You intentionally overload the service.
-* You modify or misrepresent the original content.
-* Your activity negatively impacts platform stability.
+- You intentionally overload the service.
+- You modify or misrepresent the original content.
+- Your activity negatively impacts platform stability.
 
 ---
 
@@ -312,4 +347,3 @@ Access may be restricted if:
 - MCP support
 - RSS feeds
 - Free public access
-
