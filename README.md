@@ -402,15 +402,9 @@ Example using the preferred parameters:
 https://jobicy.com/jobs/feed?industry=supporting&type=full-time&geo=usa
 ```
 
-Example using the legacy parameters:
+Output: Full-time Customer Support & Success jobs available in the USA.
 
-```text
-https://jobicy.com/feed/job_feed?job_categories=supporting&job_types=full-time&search_region=usa
-```
-
-Both examples return full-time Customer Support & Success jobs available in the USA.
-
-Use `/jobs/feed` for new integrations. Automated polling must not run more frequently than once per hour; a few checks per day are normally sufficient.
+Automated polling must not run more frequently than once per hour; a few checks per day are normally sufficient.
 
 ## Embeddable Widget
 
