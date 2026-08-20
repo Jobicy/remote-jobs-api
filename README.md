@@ -4,6 +4,8 @@
 
 # Jobicy API, MCP & RSS Feeds
 
+The public Jobs API returns the latest remote listings available on [Jobicy](https://jobicy.com). Use it for job discovery products, research tools, community websites, internal dashboards, and prototypes.
+
 ## Quick Start
 
 Get the latest 10 remote jobs:
