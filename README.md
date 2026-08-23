@@ -1,7 +1,6 @@
 ![API](https://img.shields.io/badge/API-v2-blue)
 ![MCP](https://img.shields.io/badge/MCP-supported-green)
 ![RSS](https://img.shields.io/badge/RSS-available-orange)
-[![MCP Badge](https://lobehub.com/badge/mcp/jobicy-remote-jobs-api?style=plastic)](https://lobehub.com/mcp/jobicy-remote-jobs-api)
 
 # Jobicy API, MCP & RSS Feeds
 
@@ -484,3 +483,5 @@ The MIT License applies to the repository code and examples. It does not transfe
 - Free public access
 - No API key required
 
+[![MCP Badge](https://lobehub.com/badge/mcp/jobicy-remote-jobs-api?style=plastic)](https://lobehub.com/mcp/jobicy-remote-jobs-api)
+[![smithery badge](https://smithery.ai/badge/nycreatis/remote)](https://smithery.ai/servers/nycreatis/remote)
