@@ -15,6 +15,9 @@ https://jobicy.com/api/v2/remote-jobs
 MCP:
 https://jobicy.com/mcp
 
+Docs:
+https://jobicy.com/jobs-rss-feed
+
 ## Workflow
 
 1. Identify the user's desired role, location and industry.
