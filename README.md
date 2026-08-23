@@ -15,6 +15,12 @@ Add current remote jobs to applications, websites, AI agents, newsletters, resea
 
 Full documentation and live API playground: [jobicy.com/jobs-rss-feed](https://jobicy.com/jobs-rss-feed)
 
+## Working integration examples
+
+Looking for complete, ready-to-run examples built with the Jobicy API?
+
+Explore [Jobicy API Examples](https://github.com/Jobicy/jobicy-api-examples) for practical integrations including Node.js, Python, Next.js, Telegram, Discord, Slack, WordPress, n8n, Zapier, Make, and AI agents using MCP.
+
 ## Quick Start
 
 Get the latest 100 remote jobs with cURL:
