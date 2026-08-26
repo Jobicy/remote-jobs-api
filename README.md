@@ -7,7 +7,7 @@
 Add current remote jobs to applications, websites, AI agents, newsletters, research tools, internal dashboards, and automated workflows.
 
 - No API key or account required
-- Up to 100 jobs per request
+- Up to 200 jobs per request
 - REST API with structured JSON
 - MCP server for AI assistants, agents, and IDEs
 - Filtered RSS feeds
@@ -23,10 +23,10 @@ Explore [Jobicy API Examples](https://github.com/Jobicy/jobicy-api-examples) for
 
 ## Quick Start
 
-Get the latest 100 remote jobs with cURL:
+Get the latest 200 remote jobs with cURL:
 
 ```bash
-curl "https://jobicy.com/api/v2/remote-jobs?count=100"
+curl "https://jobicy.com/api/v2/remote-jobs?count=200"
 ```
 
 Get Software Engineering jobs available in the USA with JavaScript:
@@ -101,7 +101,7 @@ All filters are optional and can be combined.
 
 | Parameter | Type | Description |
 | --- | --- | --- |
-| `count` | integer | Number of jobs to return. Default: `100`; accepted range: `1–100`. |
+| `count` | integer | Number of jobs to return. Default: `200`; accepted range: `1–200`. |
 | `geo` | string | Geographic eligibility slug, such as `usa`, `europe`, `apac`, or `anywhere`. |
 | `industry` | string | Job category slug, such as `engineering`, `marketing`, or `data-science`. |
 | `tag` | string | Keyword search across available job content. Accepted length: `3–50` characters. |
@@ -278,7 +278,7 @@ Returns current remote job listings.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
-| `count` | number | No | Number of listings to return. Range: `1–100`; default: `100`. |
+| `count` | number | No | Number of listings to return. Range: `1–200`; default: `200`. |
 | `geo` | string | No | Geographic region slug, such as `europe`, `usa`, `apac`, or `anywhere`. |
 | `industry` | string | No | Job category slug, such as `engineering`, `marketing`, or `seo`. |
 | `tag` | string | No | Keyword search across available job content. |
@@ -435,7 +435,7 @@ window.jobicyWidgetConfig = {
 | `query` | string | Default search term. |
 | `theme` | string | Widget color theme: `light` or `dark`. |
 | `autoSearch` | boolean | Whether to search automatically on load. |
-| `limit` | integer | Number of jobs to display. Range: `1–100`. |
+| `limit` | integer | Number of jobs to display. Range: `1–200`. |
 
 ## WordPress Plugin
 
