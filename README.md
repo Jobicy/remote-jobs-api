@@ -488,6 +488,3 @@ The MIT License applies to the repository code and examples. It does not transfe
 - Filtered RSS feeds
 - Free public access
 - No API key required
-
-[![MCP Badge](https://lobehub.com/badge/mcp/jobicy-remote-jobs-api?style=plastic)](https://lobehub.com/mcp/jobicy-remote-jobs-api)
-[![smithery badge](https://smithery.ai/badge/remote/jobs)](https://smithery.ai/servers/remote/jobs)
