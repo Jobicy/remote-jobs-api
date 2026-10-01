@@ -65,6 +65,7 @@ print(jobs)
 
 - [Remote Jobs API](#remote-jobs-api)
   - [Endpoint](#endpoint)
+  - [OpenAPI Specification](#openapi-specification)
   - [Query Parameters](#query-parameters)
   - [Cursor Pagination](#cursor-pagination)
   - [Taxonomies](#taxonomies)
@@ -96,6 +97,15 @@ GET https://jobicy.com/api/v2/remote-jobs
 ```
 
 Authentication is not required.
+
+### OpenAPI Specification
+
+The Jobs API is described by an OpenAPI 3.1 specification:
+
+- [OpenAPI JSON](https://jobicy.com/api/openapi.json)
+- [OpenAPI YAML](https://jobicy.com/api/openapi.yaml)
+
+Import either format into Postman, Swagger UI, or other OpenAPI-compatible tools. The specification covers the public and Commercial Jobs APIs, cursor pagination, location and category taxonomies, response schemas, and errors.
 
 ### Query Parameters
 
