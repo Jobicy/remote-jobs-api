@@ -1,0 +1,900 @@
+openapi: 3.1.0
+info:
+  title: Jobicy Remote Jobs API
+  version: 2.2.18
+  description: Public and Commercial Jobs API for current remote listings, with cursor pagination over
+    a 7-day publication window. Includes location and category taxonomy lookups. All examples contain
+    illustrative job data. This specification covers the Jobs API; the Salary API, MCP server, RSS feed,
+    and widget are separate interfaces. Batch status lookup checks stored job IDs independently of the
+    seven-day feed.
+  contact:
+    name: Jobicy
+    url: https://jobicy.com
+  termsOfService: https://jobicy.com/jobs-rss-feed
+externalDocs:
+  description: Jobicy Jobs API documentation and playground
+  url: https://jobicy.com/jobs-rss-feed
+servers:
+- url: https://jobicy.com
+  description: Production
+tags:
+- name: Remote Jobs
+  description: Job listings and filter taxonomies.
+paths:
+  /api/v2/remote-jobs:
+    get:
+      operationId: getJobicyRemoteJobs
+      summary: Retrieve remote jobs or filter taxonomies
+      description: 'Retrieve matching remote job listings published within the last 7 days. The same endpoint
+        serves public and Commercial Jobs API requests, plus location and category taxonomies.
+
+
+        Public access requires no API key. Public job URLs point to Jobicy; preserve attribution and the
+        returned source URL. For Commercial access, obtain an API key at https://jobicy.com/api-dashboard
+        and send Authorization: Bearer API_KEY on every request. Commercial access returns original application
+        URLs when available. Each direct-link job costs USD 0.01 once per API key; repeat retrievals for
+        the same key and jobs without a direct application URL are free. Commercial GET requests can debit
+        the API wallet.
+
+
+        Cursor pagination:
+
+        1. Start without cursor, using count and any geo, industry, and tag filters.
+
+        2. Pass each response''s nextCursor back as cursor, unchanged and URL-encoded.
+
+        3. Keep geo, industry, and tag unchanged between pages. The count can change within 1-200.
+
+        4. Stop when nextCursor is null and hasMore is false. Deduplicate stored jobs by id.
+
+
+        Ordering is publication time in UTC descending, then job ID descending. The upper publication
+        boundary is fixed at the start of a traversal; the lower boundary is checked on each request,
+        so listings older than 7 days can drop out during pagination. There is no separate total-record
+        cap within this window. Cursors expire 24 hours after the first request; subsequent pages do not
+        renew them. An invalid or expired cursor, or changed filters, returns HTTP 400. Start a fresh
+        traversal without cursor to discover new jobs.
+
+
+        For taxonomy values, use get=locations or get=industries. Taxonomy queries return a different
+        response shape and do not support cursor. Use returned geoSlug and industrySlug values for job
+        filters rather than guessing slugs. Deprecated industry aliases are accepted: dev -> engineering,
+        e-commerce -> management, video-audio-production -> design-multimedia, translation-localization
+        -> copywriting, smm -> marketing.
+
+
+        Synchronize no more frequently than once per hour; sequential page requests within one synchronization
+        pass are allowed. Cache public responses appropriately. A job leaving the 7-day feed does not
+        imply that it has closed. To check stored listings, call GET /api/v2/remote-jobs/status with up
+        to 100 comma-separated Jobicy IDs. The status endpoint returns active, closed, or unknown without
+        applying the publication window and never charges for status checks. Unknown is not confirmation
+        of closure.
+
+
+        Only the documented query parameters below are part of this public contract. Unknown parameters
+        and array-form query values are rejected. Salary fields and company images may be unavailable;
+        handle them without assuming a complete employer profile.
+
+        '
+      tags:
+      - Remote Jobs
+      security:
+      - {}
+      - CommercialApiKey: []
+      parameters:
+      - name: count
+        in: query
+        required: false
+        description: Maximum jobs per page. Default 200; use 100 for smaller responses. The implementation
+          clamps integer values to 1-200 rather than rejecting out-of-range integers. A non-integer value
+          returns HTTP 400. Ignored for taxonomy queries.
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 200
+        examples:
+          smallerPage:
+            value: 100
+          maximumPage:
+            value: 200
+      - name: cursor
+        in: query
+        required: false
+        description: Opaque nextCursor returned by the previous jobs response. Omit for the first page.
+          URL-encode and pass unchanged alongside the same geo, industry, and tag filters. Valid for 24
+          hours from the start of traversal; not accepted with get=locations or get=industries. A cursor
+          is not an API key.
+        schema:
+          type: string
+          maxLength: 2048
+      - name: geo
+        in: query
+        required: false
+        description: One geographic eligibility slug, such as usa, europe, apac, or anywhere. Discover
+          values using get=locations. This parameter does not accept ISO country codes or a list of countries.
+          Ignored for taxonomy queries.
+        schema:
+          type: string
+        examples:
+          usa:
+            value: usa
+          europe:
+            value: europe
+          anywhere:
+            value: anywhere
+      - name: industry
+        in: query
+        required: false
+        description: One job category slug. Discover values using get=industries. Legacy aliases are accepted
+          and reported through replacement headers. Ignored for taxonomy queries.
+        schema:
+          type: string
+        examples:
+          engineering:
+            value: engineering
+          marketing:
+            value: marketing
+      - name: tag
+        in: query
+        required: false
+        description: Keyword search across available job content. Accepted length is 3-50 bytes after
+          trimming and stripping HTML, as enforced by PHP strlen; for ASCII queries this is 3-50 characters.
+          This is a text query, not a structured skill identifier. Ignored for taxonomy queries.
+        schema:
+          type: string
+          minLength: 1
+          x-minLengthBytes: 3
+          x-maxLengthBytes: 50
+        examples:
+          python:
+            value: python
+          productDesign:
+            value: product designer
+      - name: get
+        in: query
+        required: false
+        description: Return a taxonomy instead of jobs. Omit for the jobs feed. Taxonomy responses contain
+          locations or industries plus appliedFilters, without jobs metadata. Do not combine with cursor.
+          Other feed filters are ignored in taxonomy mode.
+        schema:
+          type: string
+          enum:
+          - locations
+          - industries
+        examples:
+          locations:
+            value: locations
+          industries:
+            value: industries
+      responses:
+        '200':
+          description: Successful jobs feed, location taxonomy, or category taxonomy response. The shape
+            depends on the get parameter. An empty jobs array is a successful response.
+          headers:
+            Cache-Control:
+              description: Public responses may be cached for 3600 seconds. Authorized responses are private
+                and must not be stored.
+              schema:
+                type: string
+            X-Jobicy-API-Cache:
+              description: Diagnostic cache status emitted by the application. Do not rely on it for pagination.
+              schema:
+                type: string
+            Vary:
+              description: Authorized responses include Authorization as a varying request header.
+              schema:
+                type: string
+            X-Jobicy-Deprecated-Industry:
+              description: Legacy industry slug when an alias was used.
+              schema:
+                type: string
+            X-Jobicy-Replacement-Industry:
+              description: Canonical industry slug replacing the legacy alias.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                oneOf:
+                - $ref: '#/components/schemas/JobsResponse'
+                - $ref: '#/components/schemas/LocationsResponse'
+                - $ref: '#/components/schemas/IndustriesResponse'
+              examples:
+                publicFinalPage:
+                  summary: 'Public jobs feed: final page'
+                  description: Illustrative job data. Request without get, using count=100, geo=usa, and
+                    industry=engineering. nextCursor=null ends pagination.
+                  value:
+                    apiVersion: 2.2.18
+                    documentationUrl: https://jobi.cy/apidocs
+                    friendlyNotice: Thanks for using Jobicy API! Please credit Jobicy and link to the
+                      source.
+                    jobCount: 1
+                    lastUpdate: '2026-09-30T12:00:00+00:00'
+                    nextCursor: null
+                    hasMore: false
+                    appliedFilters:
+                      count: 100
+                      geo: usa
+                      industry: engineering
+                    jobs:
+                    - id: 123456
+                      url: https://jobicy.com/jobs/example-role
+                      jobSlug: 123456-example-role
+                      jobTitle: Senior Software Engineer
+                      companyName: Example Company
+                      companyLogo: https://example.com/logo.png
+                      jobIndustry:
+                      - Software Engineering
+                      jobType:
+                      - Full-Time
+                      jobGeo: USA
+                      jobLevel: Senior
+                      jobExcerpt: Build remote collaboration tools with a distributed engineering team.
+                      jobDescription: <p>Build remote collaboration tools with a distributed engineering
+                        team.</p>
+                      pubDate: '2026-09-30T12:00:00+00:00'
+                      salaryMin: 90000
+                      salaryMax: 125000
+                      salaryCurrency: USD
+                      salaryPeriod: yearly
+                    statusCode: 200
+                    success: true
+                emptyJobs:
+                  summary: No matching jobs
+                  value:
+                    apiVersion: 2.2.18
+                    documentationUrl: https://jobi.cy/apidocs
+                    friendlyNotice: Thanks for using Jobicy API! Please credit Jobicy and link to the
+                      source.
+                    jobCount: 0
+                    lastUpdate: ''
+                    nextCursor: null
+                    hasMore: false
+                    appliedFilters:
+                      count: 100
+                      geo: usa
+                      industry: engineering
+                    jobs: []
+                    statusCode: 200
+                    success: true
+                    message: No jobs found for the applied filters.
+                commercialFinalPage:
+                  summary: 'Commercial jobs feed: one newly charged direct-link job'
+                  description: Send a valid Bearer API key. Illustrative job and application URLs.
+                  value:
+                    apiVersion: 2.2.18
+                    documentationUrl: https://jobi.cy/apidocs
+                    friendlyNotice: 'Commercial Jobs API: the url field contains the original application
+                      URL when it is available. No attribution is required.'
+                    jobCount: 1
+                    lastUpdate: '2026-09-30T12:00:00+00:00'
+                    nextCursor: null
+                    hasMore: false
+                    appliedFilters:
+                      count: 100
+                      geo: usa
+                      industry: engineering
+                    jobs:
+                    - id: 123456
+                      url: https://example.com/careers/example-role
+                      jobSlug: 123456-example-role
+                      jobTitle: Senior Software Engineer
+                      companyName: Example Company
+                      companyLogo: https://example.com/logo.png
+                      jobIndustry:
+                      - Software Engineering
+                      jobType:
+                      - Full-Time
+                      jobGeo: USA
+                      jobLevel: Senior
+                      jobExcerpt: Build remote collaboration tools with a distributed engineering team.
+                      jobDescription: <p>Build remote collaboration tools with a distributed engineering
+                        team.</p>
+                      pubDate: '2026-09-30T12:00:00+00:00'
+                      salaryMin: 90000
+                      salaryMax: 125000
+                      salaryCurrency: USD
+                      salaryPeriod: yearly
+                      job_request_cost: 0.01
+                    statusCode: 200
+                    success: true
+                    total_request_cost: 0.01
+                locations:
+                  summary: 'Location taxonomy: get=locations'
+                  description: An abbreviated example; the actual list can contain additional values.
+                  value:
+                    locations:
+                    - geoID: 445
+                      geoName: USA
+                      geoSlug: usa
+                    - geoID: 6467
+                      geoName: Anywhere
+                      geoSlug: anywhere
+                    appliedFilters:
+                      get: locations
+                industries:
+                  summary: 'Category taxonomy: get=industries'
+                  description: An abbreviated example; the actual list can contain additional values.
+                  value:
+                    industries:
+                    - industryID: 810
+                      industryName: Software Engineering
+                      industrySlug: engineering
+                    appliedFilters:
+                      get: industries
+        '400':
+          description: Invalid query parameters, an unsupported filter, or an invalid, altered, expired,
+            or filter-mismatched cursor. The cursor is not accepted with taxonomy queries. Restart without
+            cursor after a cursor error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                expiredCursor:
+                  value:
+                    success: false
+                    error: Cursor expired. Start a new request without cursor.
+                filterMismatch:
+                  value:
+                    success: false
+                    error: Cursor does not match the filters. Keep geo, industry and tag unchanged.
+                invalidCursor:
+                  value:
+                    success: false
+                    error: Invalid cursor. Start a new request without cursor.
+                invalidCount:
+                  value:
+                    success: false
+                    error: The 'count' parameter must be a number.
+                invalidGet:
+                  value:
+                    success: false
+                    error: The 'get' parameter must be either 'locations' or 'industries'.
+        '401':
+          description: Malformed Bearer authorization, or an invalid, revoked, or expired Commercial API
+            key. Public requests do not require an Authorization header.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                invalidKey:
+                  value:
+                    success: false
+                    error: Invalid, revoked, or expired API key.
+        '402':
+          description: Insufficient API wallet balance for all newly chargeable jobs on this page. Add
+            funds or request fewer jobs.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                insufficientBalance:
+                  value:
+                    success: false
+                    error: Insufficient API wallet balance for all new jobs in this response.
+        '403':
+          description: Commercial API account is banned, or the current client IP address is not allowed
+            by the account's IP restrictions.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                bannedAccount:
+                  value:
+                    success: false
+                    error: This commercial API account is banned.
+                restrictedIp:
+                  value:
+                    success: false
+                    error: This API key is not permitted from the current IP address.
+        '500':
+          description: An internal failure occurred while retrieving taxonomy data or completing a Commercial
+            API transaction.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                transactionFailure:
+                  value:
+                    success: false
+                    error: Could not complete the commercial API transaction.
+        '429':
+          description: Too many requests. Rate limiting can be enforced by infrastructure outside the
+            PHP endpoint, so the response body and headers can vary. Respect Retry-After when present,
+            otherwise use exponential backoff. Do not start a new cursor traversal for each retry.
+          headers:
+            Retry-After:
+              description: If provided, wait for the indicated number of seconds or HTTP date before retrying.
+              schema:
+                type: string
+  /api/v2/remote-jobs/status:
+    get:
+      operationId: getJobicyJobStatuses
+      summary: Check a batch of stored job IDs
+      tags:
+      - Remote Jobs
+      description: Check 1-100 Jobicy job IDs, including jobs older than seven days. No cursor or feed
+        filters are accepted. Duplicate IDs produce one result in first-occurrence order; the limit counts
+        supplied values before duplicate removal. IDs must be positive integers no greater than 9007199254740991.
+        Unknown means the public status cannot be confirmed, not that the vacancy definitely closed. Status
+        checks return no descriptions or ATS links. Public access needs no API key. A supplied Bearer
+        key is validated with the same account, expiry, and IP rules as the feed, but no job credits or
+        wallet balance are consumed. Start routine status synchronization hourly or less frequently; sequential
+        batches in a pass are allowed. Public responses may be cached for 60 seconds; authorized responses
+        are private and not stored. This is the Jobicy listing state, not a live probe of the employer
+        ATS.
+      security:
+      - {}
+      - CommercialApiKey: []
+      parameters:
+      - name: ids
+        in: query
+        required: true
+        style: form
+        explode: false
+        description: Comma-separated positive Jobicy job IDs. Do not send ids[] or feed parameters. Surrounding
+          whitespace is ignored; empty values, signs, leading zeros, decimal numbers, and exponent notation
+          are rejected.
+        schema:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items:
+            type: integer
+            minimum: 1
+            maximum: 9007199254740991
+        example:
+        - 123456
+        - 123457
+        - 123458
+      responses:
+        '200':
+          description: One status per unique requested ID. Missing or non-public IDs are returned as unknown
+            in a successful HTTP 200 response.
+          headers:
+            Cache-Control:
+              description: 'Public: max-age=60. Authorized: private, no-store.'
+              schema:
+                type: string
+            Vary:
+              description: Authorized responses vary by Authorization.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobStatusesResponse'
+              examples:
+                mixedStatuses:
+                  summary: Illustrative active, closed, and unknown results
+                  value:
+                    apiVersion: 2.2.18
+                    checkedAt: '2026-10-01T11:00:00+00:00'
+                    count: 3
+                    jobs:
+                    - id: 123456
+                      status: active
+                    - id: 123457
+                      status: closed
+                    - id: 123458
+                      status: unknown
+                    statusCode: 200
+                    success: true
+                authorizedFreeCheck:
+                  summary: Authorized status check with no charge
+                  value:
+                    apiVersion: 2.2.18
+                    checkedAt: '2026-10-01T11:00:00+00:00'
+                    count: 3
+                    jobs:
+                    - id: 123456
+                      status: active
+                    - id: 123457
+                      status: closed
+                    - id: 123458
+                      status: unknown
+                    statusCode: 200
+                    success: true
+                    total_request_cost: 0
+        '400':
+          description: Missing/empty ids, invalid positive integers, array-form input, more than 100 supplied
+            values (before deduplication), or unsupported query parameters. No partial result is returned
+            for invalid input.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: The optional Authorization header or API key is invalid, revoked, or expired.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: The supplied Commercial API account is banned or the client IP is not permitted.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '405':
+          description: Only GET is supported.
+          headers:
+            Allow:
+              schema:
+                type: string
+                const: GET
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Too many requests. Rate limiting can be enforced by infrastructure outside the
+            PHP endpoint, so the response body and headers can vary. Respect Retry-After when present,
+            otherwise use exponential backoff. Do not start a new cursor traversal for each retry.
+          headers:
+            Retry-After:
+              description: If provided, wait for the indicated number of seconds or HTTP date before retrying.
+              schema:
+                type: string
+        '500':
+          description: Job status retrieval or authorized request logging failed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  securitySchemes:
+    CommercialApiKey:
+      type: http
+      scheme: bearer
+      description: 'Optional Commercial Jobs API key issued by the Jobicy API Dashboard. Send Authorization:
+        Bearer API_KEY on every page. Public requests require no authorization. This is an opaque API
+        key, not a JWT. Supplying a key can debit the API wallet for new direct-link jobs.'
+  schemas:
+    Job:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Unique Jobicy listing ID. Deduplicate stored listings using this value.
+          minimum: 1
+        url:
+          type: string
+          description: Public requests return the canonical Jobicy listing URL. Commercial requests return
+            the original application URL when available; otherwise the Jobicy listing URL.
+          format: uri
+        jobSlug:
+          type: string
+          description: Jobicy listing identifier formed from its ID and URL slug. Prefer id for deduplication.
+        jobTitle:
+          type: string
+          description: Job title.
+        companyName:
+          type: string
+          description: Hiring company name; may be empty when unavailable.
+        companyLogo:
+          description: Company logo URL, or false when no image is available.
+          oneOf:
+          - type: string
+            format: uri
+          - type: boolean
+            const: false
+        jobIndustry:
+          type: array
+          description: Job category display names. Use the industries taxonomy to discover filter slugs.
+          items:
+            type: string
+        jobType:
+          type: array
+          description: Employment type display values, such as Full-Time, Part-Time, Contract, or Internship.
+            The available set can change.
+          items:
+            type: string
+        jobGeo:
+          type: string
+          description: Human-readable geographic eligibility; multiple regions may be comma-separated.
+            Anywhere is returned when no region is specified. This is not an ISO country-code array.
+        jobLevel:
+          type: string
+          description: Experience or seniority display value. Multiple levels may be comma-separated.
+            Any is returned when no level is specified.
+        jobExcerpt:
+          type: string
+          description: Supplied listing summary, or a fallback excerpt of up to 55 words.
+        jobDescription:
+          type: string
+          description: Full job description as HTML. Sanitize before rendering in your application; it
+            can contain a link to the Jobicy company page.
+        pubDate:
+          type: string
+          description: Original publication date and time in UTC, formatted as ISO 8601.
+          format: date-time
+        salaryMin:
+          type: integer
+          description: Minimum salary in salaryCurrency for salaryPeriod. Omitted when unavailable.
+        salaryMax:
+          type: integer
+          description: Maximum salary in salaryCurrency for salaryPeriod. Omitted when unavailable.
+        salaryCurrency:
+          type: string
+          description: Salary currency, normally an ISO 4217 code such as USD or EUR. Omitted when unavailable.
+        salaryPeriod:
+          type: string
+          description: Salary interval, such as hourly, monthly, or yearly. Omitted when unavailable.
+            Do not compare different periods or currencies without normalization.
+        job_request_cost:
+          type: number
+          description: 'Commercial responses only: USD charged for this listing in this response. Normally
+            0.01 for a newly charged direct-link job, or 0 for a repeat or a listing without a direct
+            application URL.'
+          minimum: 0
+      required:
+      - id
+      - url
+      - jobSlug
+      - jobTitle
+      - companyName
+      - companyLogo
+      - jobIndustry
+      - jobType
+      - jobGeo
+      - jobLevel
+      - jobExcerpt
+      - jobDescription
+      - pubDate
+      description: A remote job listing. Optional salary fields are omitted when unavailable. Commercial
+        responses add job_request_cost.
+    JobsAppliedFilters:
+      type: object
+      properties:
+        count:
+          type: integer
+          description: Effective page size after clamping to the supported range.
+          minimum: 1
+          maximum: 200
+        geo:
+          type: string
+          description: Applied geographic eligibility slug.
+        industry:
+          type: string
+          description: Applied category slug after resolving legacy aliases.
+        tag:
+          type: string
+          description: Applied keyword query.
+        cursor:
+          type: string
+          description: Incoming continuation token, included only when supplied.
+      required:
+      - count
+    JobsResponse:
+      type: object
+      properties:
+        apiVersion:
+          type: string
+          description: Jobicy API implementation version.
+          examples:
+          - 2.2.18
+        documentationUrl:
+          type: string
+          description: Link to the API documentation.
+          format: uri
+        friendlyNotice:
+          type: string
+          description: Human-readable usage or attribution notice. Do not use this text for program logic.
+        jobCount:
+          type: integer
+          description: Number of jobs returned on this page, not the total across all pages.
+          minimum: 0
+          maximum: 200
+        lastUpdate:
+          description: Publication date of the newest job on this page, or an empty string when no jobs
+            match. This is not a modification timestamp or synchronization watermark.
+          anyOf:
+          - type: string
+            format: date-time
+          - type: string
+            const: ''
+        nextCursor:
+          type:
+          - string
+          - 'null'
+          description: Opaque signed continuation token. Pass it unchanged and URL-encoded as cursor on
+            the next request. Null means the traversal is complete. Do not decode, construct, or modify
+            tokens.
+        hasMore:
+          type: boolean
+          description: Whether another matching record was available when the page was generated.
+        appliedFilters:
+          $ref: '#/components/schemas/JobsAppliedFilters'
+        jobs:
+          type: array
+          description: Listings on this page; an empty array is a successful result.
+          items:
+            $ref: '#/components/schemas/Job'
+          maxItems: 200
+        statusCode:
+          type: integer
+          description: HTTP status code for a successful jobs response.
+          const: 200
+        success:
+          type: boolean
+          description: Indicates a successful jobs response.
+          const: true
+        total_request_cost:
+          type: number
+          description: 'Commercial responses only: total USD charged for this page. The cursor itself
+            does not create an additional charge.'
+          minimum: 0
+        message:
+          type: string
+          description: Optional message returned when no jobs match the filters.
+      required:
+      - apiVersion
+      - documentationUrl
+      - jobCount
+      - lastUpdate
+      - nextCursor
+      - hasMore
+      - appliedFilters
+      - jobs
+      - statusCode
+      - success
+    Location:
+      type: object
+      properties:
+        geoID:
+          type: integer
+          description: Jobicy location taxonomy term ID.
+          minimum: 1
+        geoName:
+          type: string
+          description: Human-readable country or region name.
+        geoSlug:
+          type: string
+          description: Canonical geographic eligibility filter slug, such as usa, europe, or anywhere.
+      required:
+      - geoID
+      - geoName
+      - geoSlug
+    Industry:
+      type: object
+      properties:
+        industryID:
+          type: integer
+          description: Jobicy category taxonomy term ID.
+          minimum: 1
+        industryName:
+          type: string
+          description: Human-readable category name.
+        industrySlug:
+          type: string
+          description: Canonical category filter slug, such as engineering or marketing.
+      required:
+      - industryID
+      - industryName
+      - industrySlug
+    LocationsResponse:
+      type: object
+      properties:
+        locations:
+          type: array
+          description: Available location taxonomy values.
+          items:
+            $ref: '#/components/schemas/Location'
+        appliedFilters:
+          type: object
+          properties:
+            get:
+              type: string
+              const: locations
+          required:
+          - get
+      required:
+      - locations
+      - appliedFilters
+      description: Taxonomy response for get=locations. Jobs-response metadata is not included.
+    IndustriesResponse:
+      type: object
+      properties:
+        industries:
+          type: array
+          description: Available category taxonomy values.
+          items:
+            $ref: '#/components/schemas/Industry'
+        appliedFilters:
+          type: object
+          properties:
+            get:
+              type: string
+              const: industries
+          required:
+          - get
+      required:
+      - industries
+      - appliedFilters
+      description: Taxonomy response for get=industries. Jobs-response metadata is not included.
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Always false for an application-level error.
+          const: false
+        error:
+          type: string
+          description: Human-readable error message. Use the HTTP status for error handling; message text
+            may change.
+      required:
+      - success
+      - error
+    JobStatus:
+      type: object
+      required:
+      - id
+      - status
+      additionalProperties: false
+      properties:
+        id:
+          type: integer
+          minimum: 1
+          maximum: 9007199254740991
+          description: Requested Jobicy job ID.
+        status:
+          type: string
+          enum:
+          - active
+          - closed
+          - unknown
+          description: 'active: public listing open for applications. closed: expired, filled, or past
+            its expiry date. unknown: missing/deleted ID, another post type, or unavailable to the public
+            API. Unknown is not confirmed closure.'
+    JobStatusesResponse:
+      type: object
+      required:
+      - apiVersion
+      - checkedAt
+      - count
+      - jobs
+      - statusCode
+      - success
+      properties:
+        apiVersion:
+          type: string
+          examples:
+          - 2.2.18
+        checkedAt:
+          type: string
+          format: date-time
+          description: UTC time when this batch was evaluated. Public caches may serve a result for up
+            to 60 seconds.
+        count:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Number of unique requested IDs, including unknown IDs.
+        jobs:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items:
+            $ref: '#/components/schemas/JobStatus'
+          description: One result per unique ID, preserving first occurrence order. Contains no job details
+            or ATS URLs.
+        statusCode:
+          type: integer
+          const: 200
+        success:
+          type: boolean
+          const: true
+        total_request_cost:
+          type: number
+          const: 0
+          description: Present only for authorized requests. Status checks are free and require no wallet
+            balance.

@@ -9,6 +9,7 @@ Add current remote jobs to applications, websites, AI agents, newsletters, resea
 - No API key or account required
 - Up to 200 jobs per page
 - Cursor pagination through listings published in the last 7 days
+- Batch status checks for up to 100 stored job IDs
 - REST API with structured JSON
 - MCP server for AI assistants, agents, and IDEs
 - Filtered RSS feeds
@@ -68,6 +69,7 @@ print(jobs)
   - [OpenAPI Specification](#openapi-specification)
   - [Query Parameters](#query-parameters)
   - [Cursor Pagination](#cursor-pagination)
+  - [Batch Status Check](#batch-status-check)
   - [Taxonomies](#taxonomies)
   - [Response Fields](#response-fields)
   - [API Examples](#api-examples)
@@ -105,7 +107,7 @@ The Jobs API is described by an OpenAPI 3.1 specification:
 - [OpenAPI JSON](https://jobicy.com/api/openapi.json)
 - [OpenAPI YAML](https://jobicy.com/api/openapi.yaml)
 
-Import either format into Postman, Swagger UI, or other OpenAPI-compatible tools. The specification covers the public and Commercial Jobs APIs, cursor pagination, location and category taxonomies, response schemas, and errors.
+Import either format into Postman, Swagger UI, or other OpenAPI-compatible tools. The specification covers the public and Commercial Jobs APIs, cursor pagination, batch status checks, location and category taxonomies, response schemas, and errors. Local copies are available as [`openapi.json`](./openapi.json) and [`openapi.yaml`](./openapi.yaml).
 
 ### Query Parameters
 
@@ -223,6 +225,75 @@ while True:
     params["cursor"] = next_cursor
 ```
 
+### Batch Status Check
+
+Use stored Jobicy IDs to check whether listings are still open without downloading descriptions again:
+
+```http
+GET https://jobicy.com/api/v2/remote-jobs/status?ids=123456,123457,123458
+```
+
+```bash
+curl --fail-with-body --max-time 30 "https://jobicy.com/api/v2/remote-jobs/status?ids=123456,123457,123458"
+```
+
+Illustrative response; these IDs are placeholders:
+
+```json
+{
+  "apiVersion": "2.2.18",
+  "checkedAt": "2026-10-01T12:00:00+00:00",
+  "count": 3,
+  "jobs": [
+    {"id": 123456, "status": "active"},
+    {"id": 123457, "status": "closed"},
+    {"id": 123458, "status": "unknown"}
+  ],
+  "statusCode": 200,
+  "success": true
+}
+```
+
+| Status | Meaning |
+| --- | --- |
+| `active` | A public Jobicy listing that is open, regardless of its publication date. |
+| `closed` | A listing marked expired, filled, or past its valid expiration date. |
+| `unknown` | The ID is missing, deleted, not public, password protected, or excluded from the API. This does not confirm closure. |
+
+- `ids` is required: 1–100 comma-separated positive integer IDs, each no greater than `9007199254740991`. Use IDs returned by Jobicy, without signs or leading zeros. Surrounding whitespace is ignored.
+- The 100-ID limit counts supplied values before deduplication. Each distinct ID is returned once, in first-occurrence order; `count` is the number of returned records.
+- A malformed ID or unsupported parameter rejects the entire request with HTTP 400. Only GET is supported; other methods return HTTP 405 with `Allow: GET`. Even an all-`unknown` result returns HTTP 200.
+- This endpoint is independent of the feed's seven-day publication window. A job dropping out of the feed does not imply it has closed. Split larger stored lists into batches of at most 100 IDs.
+- Status reflects Jobicy's records, not a live request to a third-party applicant tracking system. `checkedAt` is the check time in UTC; cached public responses can be up to 60 seconds old.
+- No API key is required. Checking statuses is free for public and Commercial API users. An optional `Authorization: Bearer API_KEY` uses normal key, account, and IP checks and adds `total_request_cost: 0`; it does not charge the wallet or mark jobs as purchased. Authorized responses use `private, no-store`.
+- Respect API rate limits and retry HTTP 429 according to `Retry-After` when provided. Keep `unknown` separate from `closed`, and do not convert request failures into job closures.
+
+JavaScript:
+
+```javascript
+const ids = [123456, 123457, 123458];
+const url = new URL("https://jobicy.com/api/v2/remote-jobs/status");
+url.searchParams.set("ids", ids.join(","));
+const response = await fetch(url, { signal: AbortSignal.timeout(15000) });
+if (!response.ok) throw new Error(`HTTP ${response.status}`);
+const data = await response.json();
+console.log(data.jobs);
+```
+
+Python:
+
+```python
+response = requests.get(
+    "https://jobicy.com/api/v2/remote-jobs/status",
+    params={"ids": "123456,123457,123458"},
+    timeout=30,
+)
+response.raise_for_status()
+print(response.json()["jobs"])
+```
+
+Runnable Node.js, Python, PHP, and cURL examples are in [`examples/status.*`](./examples/). The reusable [Node.js and Python clients](https://github.com/Jobicy/jobicy-api-examples) validate ID batches and returned statuses.
+
 ### Taxonomies
 
 Retrieve the current filter values before storing location or category slugs in a production integration:
@@ -286,7 +357,7 @@ Example response: a final page with one matching job. The dates and listing belo
 
 ```json
 {
-  "apiVersion": "2.2.17",
+  "apiVersion": "2.2.18",
   "documentationUrl": "https://jobi.cy/apidocs",
   "jobCount": 1,
   "lastUpdate": "2026-09-30T12:00:00+00:00",

@@ -1,15 +1,12 @@
 <?php
 
-$url = 'https://jobicy.com/api/v2/remote-jobs?count=10';
-
-$response = file_get_contents($url);
-
-if ($response === false) {
-    die('Failed to fetch jobs');
+require __DIR__ . '/http.php';
+try {
+    $data = jobicy_request('https://jobicy.com/api/v2/remote-jobs?count=10');
+    echo 'Found ' . count($data['jobs']) . " jobs\n";
+    print_r($data['jobs']);
+    echo 'Next cursor: ' . ($data['nextCursor'] ?? 'none') . "\n";
+} catch (Throwable $error) {
+    fwrite(STDERR, $error->getMessage() . "\n");
+    exit(1);
 }
-
-$jobs = json_decode($response, true);
-
-echo 'Found ' . count($jobs) . " jobs\n";
-
-print_r($jobs);
