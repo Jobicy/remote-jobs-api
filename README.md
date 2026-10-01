@@ -7,7 +7,8 @@
 Add current remote jobs to applications, websites, AI agents, newsletters, research tools, internal dashboards, and automated workflows.
 
 - No API key or account required
-- Up to 200 jobs per request
+- Up to 200 jobs per page
+- Cursor pagination through listings published in the last 7 days
 - REST API with structured JSON
 - MCP server for AI assistants, agents, and IDEs
 - Filtered RSS feeds
@@ -23,7 +24,7 @@ Explore [Jobicy API Examples](https://github.com/Jobicy/jobicy-api-examples) for
 
 ## Quick Start
 
-Get the latest 200 remote jobs with cURL:
+Get up to 200 remote jobs published in the last 7 days with cURL:
 
 ```bash
 curl "https://jobicy.com/api/v2/remote-jobs?count=200"
@@ -65,6 +66,7 @@ print(jobs)
 - [Remote Jobs API](#remote-jobs-api)
   - [Endpoint](#endpoint)
   - [Query Parameters](#query-parameters)
+  - [Cursor Pagination](#cursor-pagination)
   - [Taxonomies](#taxonomies)
   - [Response Fields](#response-fields)
   - [API Examples](#api-examples)
@@ -85,7 +87,7 @@ print(jobs)
 
 ## Remote Jobs API
 
-The public Jobs API returns the latest remote listings available on [Jobicy](https://jobicy.com). It can be used for job discovery products, career tools, community websites, newsletters, research, internal applications, and prototypes.
+The public Jobs API returns matching remote listings published in the last 7 days on [Jobicy](https://jobicy.com). Cursor pagination lets you retrieve more than one page within that window. It can be used for job discovery products, career tools, community websites, newsletters, research, internal applications, and prototypes.
 
 ### Endpoint
 
@@ -101,7 +103,8 @@ All filters are optional and can be combined.
 
 | Parameter | Type | Description |
 | --- | --- | --- |
-| `count` | integer | Number of jobs to return. Default: `200`; accepted range: `1–200`. |
+| `count` | integer | Maximum jobs per page. Default: `200`; accepted range: `1–200`. Use `100` for smaller pages. The final page can contain fewer jobs. |
+| `cursor` | string | Opaque continuation token from the previous response's `nextCursor`. Omit it for the first page and pass it unchanged, URL-encoded, to continue. Jobs feed only; valid for 24 hours from the first request. |
 | `geo` | string | Geographic eligibility slug, such as `usa`, `europe`, `apac`, or `anywhere`. |
 | `industry` | string | Job category slug, such as `engineering`, `marketing`, or `data-science`. |
 | `tag` | string | Keyword search across available job content. Accepted length: `3–50` characters. |
@@ -110,6 +113,104 @@ Example:
 
 ```text
 https://jobicy.com/api/v2/remote-jobs?count=20&geo=usa&industry=marketing&tag=seo
+```
+
+### Cursor Pagination
+
+Cursor pagination is the preferred way to page through the jobs feed. It is available for both the public and Commercial Jobs APIs.
+
+1. Make the first request without `cursor`, using your chosen `count`, `geo`, `industry`, and `tag`.
+2. Read `nextCursor` from the response. If it is a string, pass that exact value back as `?cursor=` alongside the same filters.
+3. Continue until `nextCursor` is `null` and `hasMore` is `false`.
+
+First page:
+
+```text
+https://jobicy.com/api/v2/remote-jobs?count=100&geo=usa&industry=engineering
+```
+
+Next page:
+
+```text
+https://jobicy.com/api/v2/remote-jobs?count=100&geo=usa&industry=engineering&cursor=NEXT_CURSOR
+```
+
+Replace `NEXT_CURSOR` with the actual `nextCursor` value returned by the previous response. Use a query-string builder to URL-encode it. Treat cursors as opaque tokens; do not decode, edit, or construct them.
+
+#### Window and cursor rules
+
+- The feed is limited to publication dates within the last **7 days** for both public and Commercial requests. The page-size limit does not impose a separate total-record cap within that window.
+- Jobs are ordered by publication time in UTC, newest first, then by descending job ID when publication times are equal.
+- The upper publication boundary is fixed at the start of a traversal. The lower boundary is checked on each request, so jobs older than 7 days can drop out during pagination.
+- Keep `geo`, `industry`, and `tag` unchanged between pages. The page size can change within the accepted range.
+- Cursors expire **24 hours after the first request**. Later pages do not extend that lifetime.
+- An expired or modified cursor, or a cursor used with different filters, returns HTTP `400` with `success: false` and an `error` message. Omit `cursor` to start again.
+- A cursor continues toward older records. Start a new traversal without `cursor` when checking for newly available jobs.
+- Deduplicate stored jobs by `id`. A job leaving the 7-day window can still be open; its absence from the feed does not indicate closure.
+- Cursors are not API keys. Public requests need no authentication. For Commercial access, send `Authorization: Bearer API_KEY` on every page; existing per-key billing rules apply only to returned jobs.
+- `cursor` is supported by the REST jobs feed, not by the `get=locations` or `get=industries` requests.
+
+#### JavaScript: retrieve all available pages
+
+```javascript
+const params = new URLSearchParams({
+  count: "100",
+  geo: "usa",
+  industry: "engineering",
+});
+let nextCursor = null;
+
+do {
+  if (nextCursor) {
+    params.set("cursor", nextCursor);
+  }
+
+  const response = await fetch(
+    `https://jobicy.com/api/v2/remote-jobs?${params}`,
+    { headers: { Accept: "application/json" } }
+  );
+  const data = await response.json();
+
+  if (!response.ok || data.success === false) {
+    throw new Error(data.error || `HTTP ${response.status}`);
+  }
+
+  for (const job of data.jobs) {
+    console.log(job);
+  }
+
+  nextCursor = data.nextCursor;
+} while (nextCursor);
+```
+
+#### Python: retrieve all available pages
+
+```python
+import requests
+
+params = {"count": 100, "geo": "europe", "industry": "marketing"}
+
+while True:
+    response = requests.get(
+        "https://jobicy.com/api/v2/remote-jobs",
+        params=params,
+        headers={"Accept": "application/json"},
+        timeout=30,
+    )
+    response.raise_for_status()
+    data = response.json()
+
+    if data.get("success") is False:
+        raise RuntimeError(data.get("error", "API request failed"))
+
+    for job in data["jobs"]:
+        print(job)
+
+    next_cursor = data.get("nextCursor")
+    if not next_cursor:
+        break
+
+    params["cursor"] = next_cursor
 ```
 
 ### Taxonomies
@@ -135,7 +236,21 @@ The following deprecated category slugs remain supported for backward compatibil
 
 ### Response Fields
 
-The response contains a `jobs` array. Each job can contain the following fields:
+The response contains page metadata and a `jobs` array.
+
+| Response field | Type | Description |
+| --- | --- | --- |
+| `jobs` | array | Jobs returned on this page. |
+| `jobCount` | integer | Number of jobs returned on this page, not the total available. |
+| `nextCursor` | string or null | Continuation token for the next request. `null` means there is no next page in this response. |
+| `hasMore` | boolean | Whether another matching job was available when this page was generated. |
+| `lastUpdate` | date-time or empty string | Publication date of the newest job on this page; empty when no jobs match. |
+| `appliedFilters` | object | Applied page size, filters, and incoming cursor when supplied. |
+| `apiVersion` | string | API version. |
+| `success` | boolean | `true` for a successful response; `false` for an error response. |
+| `statusCode` | integer | HTTP status included in successful responses. Errors contain `success: false` and `error`. |
+
+Each job can contain the following fields:
 
 | Field | Type | Description |
 | --- | --- | --- |
@@ -157,27 +272,40 @@ The response contains a `jobs` array. Each job can contain the following fields:
 | `salaryCurrency` | string | ISO 4217 salary currency code when available. |
 | `salaryPeriod` | string | Salary interval, such as `hourly`, `monthly`, or `yearly`, when available. |
 
-Example job object:
+Example response: a final page with one matching job. The dates and listing below are illustrative.
 
 ```json
 {
-  "id": 123456,
-  "url": "https://jobicy.com/jobs/example-role",
-  "jobSlug": "example-role",
-  "jobTitle": "Senior Product Designer",
-  "companyName": "Example Company",
-  "companyLogo": "https://example.com/logo.png",
-  "jobIndustry": ["Creative & Design"],
-  "jobType": ["full-time"],
-  "jobGeo": "Anywhere",
-  "jobLevel": "Senior",
-  "jobExcerpt": "A short summary of the role and its main responsibilities.",
-  "jobDescription": "<p>Complete HTML job description</p>",
-  "pubDate": "2026-07-30T12:00:00+00:00",
-  "salaryMin": 90000,
-  "salaryMax": 125000,
-  "salaryCurrency": "USD",
-  "salaryPeriod": "yearly"
+  "apiVersion": "2.2.17",
+  "documentationUrl": "https://jobi.cy/apidocs",
+  "jobCount": 1,
+  "lastUpdate": "2026-09-30T12:00:00+00:00",
+  "nextCursor": null,
+  "hasMore": false,
+  "appliedFilters": {"count": 100},
+  "jobs": [
+    {
+      "id": 123456,
+      "url": "https://jobicy.com/jobs/example-role",
+      "jobSlug": "123456-example-role",
+      "jobTitle": "Senior Product Designer",
+      "companyName": "Example Company",
+      "companyLogo": "https://example.com/logo.png",
+      "jobIndustry": ["Creative & Design"],
+      "jobType": ["Full-Time"],
+      "jobGeo": "Anywhere",
+      "jobLevel": "Senior",
+      "jobExcerpt": "A short summary of the role and its main responsibilities.",
+      "jobDescription": "<p>Complete HTML job description</p>",
+      "pubDate": "2026-09-30T12:00:00+00:00",
+      "salaryMin": 90000,
+      "salaryMax": 125000,
+      "salaryCurrency": "USD",
+      "salaryPeriod": "yearly"
+    }
+  ],
+  "statusCode": 200,
+  "success": true
 }
 ```
 
@@ -224,7 +352,10 @@ https://jobicy.com/api/v2/remote-jobs?count=10&geo=anywhere
 - Preserve the canonical Jobicy `url` when displaying or referencing a listing.
 - Cache responses where appropriate and avoid unnecessary repeated requests.
 - Handle an empty `jobs` array as a valid response and allow users to broaden their filters.
-- Do not schedule automated polling more frequently than once per hour.
+- Follow `nextCursor` sequentially to complete a synchronization pass; stop when it is `null`.
+- Store jobs by `id` to avoid duplicates, and handle HTTP `400` cursor errors by starting a new traversal.
+- Start each new synchronization pass without a cursor to discover newly available jobs.
+- Do not schedule new automated synchronization passes more frequently than once per hour.
 
 ## MCP Server for AI Agents
 
@@ -467,7 +598,7 @@ The Jobicy API, MCP server, and RSS feeds are designed for websites, application
 2. Keep Jobicy as the original source and preserve the canonical Jobicy job URL when displaying a listing.
 3. You may create your own interfaces, summaries, categories, search experiences, and additional context around listings.
 4. Do not present Jobicy listings as your own original job postings or remove source attribution.
-5. Cache responses where appropriate and do not run automated polling more frequently than once per hour.
+5. Cache responses where appropriate and do not start new automated polling or synchronization passes more frequently than once per hour. Cursor requests may be made sequentially to complete an API synchronization pass.
 6. Do not use Jobicy data to create spam networks, misleading job databases, or services that negatively affect employers, candidates, or platform stability.
 7. Excessive requests, intentional overloading, content misrepresentation, or abusive activity may result in restricted access.
 
